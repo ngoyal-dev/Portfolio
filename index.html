@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#0B1929; color:#fff; overflow:hidden; width:100vw; height:100vh; }
+
+  .scene { position:absolute; inset:0; opacity:0; transition:opacity 0.8s ease; pointer-events:none; display:flex; align-items:center; justify-content:center; }
+  .scene.active { opacity:1; pointer-events:auto; }
+
+  /* Title scene */
+  .title-scene { flex-direction:column; gap:20px; text-align:center; background:linear-gradient(135deg,#0B1929 0%,#1E3A5F 50%,#0B1929 100%); }
+  .title-scene .logo { display:flex; align-items:center; gap:6px; font-size:36px; margin-bottom:10px; }
+  .title-scene .logo .blue { color:#8BB8E8; font-weight:300; }
+  .title-scene .logo .matter { color:#fff; font-weight:700; }
+  .title-scene h1 { font-size:48px; font-weight:800; letter-spacing:-0.03em; background:linear-gradient(135deg,#4A90D9,#7C6DD8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .title-scene .sub { font-size:18px; color:#7A8FA6; max-width:600px; line-height:1.6; }
+
+  /* Tab scenes */
+  .tab-scene { flex-direction:column; padding:40px 60px; align-items:flex-start; background:#F4F8FD; color:#2C3E50; }
+  .tab-header { display:flex; align-items:center; gap:12px; margin-bottom:24px; width:100%; }
+  .tab-icon { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#4A90D9,#3A7BC8); display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; }
+  .tab-name { font-size:14px; color:#4A90D9; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; }
+  .tab-title { font-size:32px; font-weight:800; color:#1E3A5F; letter-spacing:-0.02em; margin-top:2px; }
+
+  .narration-box { background:#fff; border:1px solid #D6E4F0; border-radius:16px; padding:28px 32px; box-shadow:0 4px 20px rgba(74,144,217,0.08); width:100%; margin-bottom:20px; }
+  .narration-text { font-size:17px; line-height:1.7; color:#2C3E50; }
+  .narration-text em { color:#4A90D9; font-style:normal; font-weight:600; }
+
+  .use-case-box { background:linear-gradient(135deg,#4A90D9 0%,#3A7BC8 100%); border-radius:14px; padding:22px 28px; width:100%; }
+  .use-case-label { font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.65); margin-bottom:6px; font-weight:600; }
+  .use-case-text { font-size:16px; color:#fff; line-height:1.5; font-weight:500; }
+
+  .features-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; margin-bottom:20px; }
+  .feature-card { background:#fff; border:1px solid #E8F1FB; border-radius:12px; padding:16px 18px; }
+  .feature-card .feat-icon { font-size:20px; margin-bottom:6px; }
+  .feature-card .feat-title { font-size:13px; font-weight:700; color:#1E3A5F; margin-bottom:3px; }
+  .feature-card .feat-desc { font-size:12px; color:#7A8FA6; line-height:1.4; }
+
+  /* CTA scene */
+  .cta-scene { flex-direction:column; gap:24px; text-align:center; background:linear-gradient(135deg,#0B1929,#1E3A5F); }
+  .cta-scene h2 { font-size:36px; font-weight:800; letter-spacing:-0.02em; }
+  .cta-scene .cta-sub { font-size:16px; color:#7A8FA6; max-width:500px; line-height:1.6; }
+  .cta-pills { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .cta-pill { padding:8px 18px; border-radius:20px; background:rgba(74,144,217,0.15); color:#8BB8E8; font-size:13px; font-weight:500; border:1px solid rgba(74,144,217,0.25); }
+
+  /* Progress bar */
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:linear-gradient(90deg,#4A90D9,#7C6DD8); transition:width 0.5s ease; z-index:100; }
+
+  /* Timer */
+  .timer { position:fixed; bottom:16px; right:24px; font-size:12px; color:rgba(255,255,255,0.5); font-variant-numeric:tabular-nums; z-index:100; }
+
+  /* Controls */
+  .controls { position:fixed; bottom:14px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:100; }
+  .ctrl-btn { width:36px; height:36px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.7); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); transition:all 0.15s; }
+  .ctrl-btn:hover { background:rgba(255,255,255,0.15); color:#fff; }
+  .ctrl-btn.active { background:#4A90D9; color:#fff; border-color:#4A90D9; }
+
+  /* Scene indicators */
+  .indicators { position:fixed; bottom:16px; left:24px; display:flex; gap:6px; z-index:100; }
+  .indicator { width:8px; height:8px; border-radius:4px; background:rgba(255,255,255,0.2); transition:all 0.3s; }
+  .indicator.active { background:#4A90D9; width:24px; }
+
+  /* Typewriter */
+  .typewriter { overflow:hidden; white-space:normal; }
+
+  /* Animated accent */
+  @keyframes pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+  .pulse { animation:pulse 2s ease infinite; }
+
+  @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .slide-up { animation:slideUp 0.6s ease forwards; }
+  .delay-1 { animation-delay:0.2s; opacity:0; }
+  .delay-2 { animation-delay:0.4s; opacity:0; }
+  .delay-3 { animation-delay:0.6s; opacity:0; }
+  .delay-4 { animation-delay:0.8s; opacity:0; }
+</style>
+</head>
+<body>
+
+<!-- Scene 0: Title -->
+<div class="scene active" id="scene-0">
+  <div class="title-scene" style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;">
+    <div class="logo slide-up"><span class="blue">blue</span><span class="matter">matter</span></div>
+    <div style="font-size:13px;color:#4A90D9;text-transform:uppercase;letter-spacing:0.15em;font-weight:600;margin-bottom:8px;" class="slide-up delay-1">Introducing</div>
+    <h1 class="slide-up delay-2">PortfolioIQ</h1>
+    <div class="sub slide-up delay-3">AI-powered portfolio analysis and optimization for biopharma R&D decision-makers</div>
+    <div style="margin-top:32px;display:flex;gap:16px;" class="slide-up delay-4">
+      <div style="padding:8px 20px;border-radius:20px;background:rgba(74,144,217,0.12);color:#8BB8E8;font-size:13px;border:1px solid rgba(74,144,217,0.25);">6 Interactive Modules</div>
+      <div style="padding:8px 20px;border-radius:20px;background:rgba(74,144,217,0.12);color:#8BB8E8;font-size:13px;border:1px solid rgba(74,144,217,0.25);">AI Co-Pilot on Every Tab</div>
+      <div style="padding:8px 20px;border-radius:20px;background:rgba(74,144,217,0.12);color:#8BB8E8;font-size:13px;border:1px solid rgba(74,144,217,0.25);">Excel-Driven Data</div>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 1: Executive Dashboard -->
+<div class="scene" id="scene-1">
+  <div class="tab-scene" style="width:100%;height:100%;">
+    <div class="tab-header"><div class="tab-icon">📊</div><div><div class="tab-name">Tab 1</div><div class="tab-title">Executive Dashboard</div></div></div>
+    <div class="narration-box slide-up">
+      <div class="narration-text">The Executive Dashboard is the <em>single-screen portfolio story</em> for board meetings. It surfaces total portfolio rNPV, 10-year cumulative revenue, R&D investment, and pipeline-to-inline mix — all at a glance. Below the KPIs, you see a <em>financial projection chart</em> (revenue, gross margin, operating profit), a <em>TA performance table</em> with ROI ratios, upcoming <em>inflection points</em>, and auto-generated <em>strategic alerts</em> flagging LOE cliffs and concentration risks.</div>
+    </div>
+    <div class="features-grid slide-up delay-1">
+      <div class="feature-card"><div class="feat-icon">💰</div><div class="feat-title">KPI Summary Cards</div><div class="feat-desc">rNPV, 10Y revenue, R&D spend, pipeline/inline mix — each with an "Ask AI" sparkle trigger</div></div>
+      <div class="feature-card"><div class="feat-icon">📈</div><div class="feat-title">Financial Projections</div><div class="feat-desc">Revenue, gross margin, and operating profit visualized over the 10-year window</div></div>
+      <div class="feature-card"><div class="feat-icon">⚠️</div><div class="feat-title">Strategic Alerts</div><div class="feat-desc">Auto-generated flags: LOE cliffs, TA concentration, pipeline gaps — click "Ask AI" to prioritize</div></div>
+      <div class="feature-card"><div class="feat-icon">🎯</div><div class="feat-title">TA Performance Table</div><div class="feat-desc">Revenue, rNPV, investment, and ROI ratio per therapeutic area for portfolio balance review</div></div>
+    </div>
+    <div class="use-case-box slide-up delay-2"><div class="use-case-label">Example Use Case</div><div class="use-case-text">"I have 10 minutes before the board meeting — show me the portfolio story, top risks, and what's changed since last quarter."</div></div>
+  </div>
+</div>
+
+<!-- Scene 2: Revenue Forecast -->
+<div class="scene" id="scene-2">
+  <div class="tab-scene" style="width:100%;height:100%;">
+    <div class="tab-header"><div class="tab-icon">📉</div><div><div class="tab-name">Tab 2</div><div class="tab-title">Revenue Forecast / LRP</div></div></div>
+    <div class="narration-box slide-up">
+      <div class="narration-text">The Revenue Forecast tab is the <em>long-range planning engine</em>. A 10-year stacked area chart lets you toggle between three views: <em>by Therapeutic Area</em>, <em>Inline vs. Pipeline</em>, and <em>PTRS Risk Buckets</em>. Below the chart, customizable <em>strategic periods</em> (Investment Phase, Growth Phase, LOE Impact) show revenue, pipeline contribution, and growth rates for each window. A dedicated <em>Pipeline Potential</em> view compares risk-adjusted revenue against the full unrisked (100% PTRS) upside for every pipeline program.</div>
+    </div>
+    <div class="features-grid slide-up delay-1">
+      <div class="feature-card"><div class="feat-icon">🔀</div><div class="feat-title">3-Way Toggle</div><div class="feat-desc">Switch between TA view, Inline vs Pipeline, and PTRS risk buckets with one click</div></div>
+      <div class="feature-card"><div class="feat-icon">📅</div><div class="feat-title">Period Analysis</div><div class="feat-desc">Investment, Growth, and LOE Impact phases with revenue totals and growth rates</div></div>
+      <div class="feature-card"><div class="feat-icon">🏆</div><div class="feat-title">Growth Drivers</div><div class="feat-desc">Top 5 programs ranked by cumulative 10Y revenue contribution</div></div>
+      <div class="feature-card"><div class="feat-icon">🔓</div><div class="feat-title">Pipeline Upside</div><div class="feat-desc">Risk-adjusted vs 100% PTRS comparison reveals how much value is locked behind clinical risk</div></div>
+    </div>
+    <div class="use-case-box slide-up delay-2"><div class="use-case-label">Example Use Case</div><div class="use-case-text">"What percentage of our 2030 revenue depends on programs with less than 50% PTRS? Show me where the risk-adjusted vs. unrisked gap is largest."</div></div>
+  </div>
+</div>
+
+<!-- Scene 3: R&D Portfolio -->
+<div class="scene" id="scene-3">
+  <div class="tab-scene" style="width:100%;height:100%;">
+    <div class="tab-header"><div class="tab-icon">🧬</div><div><div class="tab-name">Tab 3</div><div class="tab-title">R&D Portfolio Review</div></div></div>
+    <div class="narration-box slide-up">
+      <div class="narration-text">The R&D Portfolio Review has <em>three sub-tabs</em>. The <em>Portfolio Summary</em> shows a visual map of every program by TA and development phase, with a timeline of upcoming readouts, launches, and LOEs. The <em>R&D Budget</em> sub-tab breaks down committed vs. future spend by TA and stage, including PTRS-weighted expected spend. The <em>Valuation</em> sub-tab is where the strategic magic happens: a <em>risk-reward bubble chart</em> with quadrant analysis, <em>value unlock rankings</em>, and a full <em>program scorecard</em> — each row with an AI sparkle trigger for instant deep dives.</div>
+    </div>
+    <div class="features-grid slide-up delay-1">
+      <div class="feature-card"><div class="feat-icon">🗺️</div><div class="feat-title">Portfolio Map</div><div class="feat-desc">TA × Phase matrix — click any program pill to ask the AI about it instantly</div></div>
+      <div class="feature-card"><div class="feat-icon">💸</div><div class="feat-title">Budget Analysis</div><div class="feat-desc">Committed spend, total future spend, and PTRS-weighted expected future spend</div></div>
+      <div class="feature-card"><div class="feat-icon">🫧</div><div class="feat-title">Risk-Reward Scatter</div><div class="feat-desc">PTRS vs rNPV bubble chart with quadrants: Protect, Calculated Bets, Manage, Kill Zone</div></div>
+      <div class="feature-card"><div class="feat-icon">⬆️</div><div class="feat-title">Value Unlock</div><div class="feat-desc">Incremental rNPV gained if each program's current phase succeeds — ranked visually</div></div>
+    </div>
+    <div class="use-case-box slide-up delay-2"><div class="use-case-label">Example Use Case</div><div class="use-case-text">"Are we over-investing in Neuroscience relative to rNPV? Which programs sit in the 'kill zone' and should we cut them?"</div></div>
+  </div>
+</div>
+
+<!-- Scene 4: Program Deep Dive -->
+<div class="scene" id="scene-4">
+  <div class="tab-scene" style="width:100%;height:100%;">
+    <div class="tab-header"><div class="tab-icon">🔬</div><div><div class="tab-name">Tab 4</div><div class="tab-title">Program Deep Dive</div></div></div>
+    <div class="narration-box slide-up">
+      <div class="narration-text">This is the <em>360-degree view for go/no-go decisions</em>. Select any program from the dropdown and instantly see its complete profile: molecule, TA, indication, PTRS, all spend figures, launch and LOE timelines. The <em>revenue projection chart</em> overlays risk-adjusted revenue against the 100% PTRS potential with an LOE reference line. Most critically, the <em>Portfolio Impact panel</em> shows what happens if this program advances — how it changes revenue contribution, growth trajectory, and committed spend. This is the view designed for <em>CMOs and CFOs at portfolio committee meetings</em>.</div>
+    </div>
+    <div class="features-grid slide-up delay-1">
+      <div class="feature-card"><div class="feat-icon">📋</div><div class="feat-title">Complete Program Profile</div><div class="feat-desc">Every assumption in one place: PTRS, spend, launch, LOE, priority, value unlock</div></div>
+      <div class="feature-card"><div class="feat-icon">📊</div><div class="feat-title">RA vs 100% PTRS Chart</div><div class="feat-desc">Revenue projection with LOE reference line — see the full potential vs risk-adjusted view</div></div>
+      <div class="feature-card"><div class="feat-icon">🌊</div><div class="feat-title">Portfolio Impact</div><div class="feat-desc">Revenue share, incremental spend, growth impact, and decision status at a glance</div></div>
+      <div class="feature-card"><div class="feat-icon">✨</div><div class="feat-title">AI-Powered Analysis</div><div class="feat-desc">Every metric card has an AI trigger — ask about PTRS benchmarks, failure scenarios, or go/no-go cases</div></div>
+    </div>
+    <div class="use-case-box slide-up delay-2"><div class="use-case-label">Example Use Case</div><div class="use-case-text">"Cerebrix is coming to the portfolio committee next month. If we approve Phase 3 investment, what's the total committed spend and how does it change our 2029–2033 growth trajectory?"</div></div>
+  </div>
+</div>
+
+<!-- Scene 5: Optimization -->
+<div class="scene" id="scene-5">
+  <div class="tab-scene" style="width:100%;height:100%;">
+    <div class="tab-header"><div class="tab-icon">⚡</div><div><div class="tab-name">Tab 5</div><div class="tab-title">Portfolio Optimization</div></div></div>
+    <div class="narration-box slide-up">
+      <div class="narration-text">The Optimization tab is where <em>strategy meets math</em>. Select an objective — maximize rNPV, optimize cash flow, maximize value unlock, or balance risk-adjusted returns. Manually <em>include or exclude programs</em> before running scenarios. The ranked output shows which programs make the cut, and the <em>Efficiency Frontier</em> visualization shows the maximum achievable portfolio value at each budget constraint level — revealing whether you're leaving value on the table and where reallocation would move you closer to the optimal curve.</div>
+    </div>
+    <div class="features-grid slide-up delay-1">
+      <div class="feature-card"><div class="feat-icon">🎛️</div><div class="feat-title">4 Optimization Objectives</div><div class="feat-desc">rNPV, EPS/Cash Flow, Value Unlock, Risk-Adjusted Returns — each produces a different ranked portfolio</div></div>
+      <div class="feature-card"><div class="feat-icon">✅</div><div class="feat-title">Manual Override</div><div class="feat-desc">Toggle programs in/out before optimization — reflects real-world constraints and board mandates</div></div>
+      <div class="feature-card"><div class="feat-icon">🏔️</div><div class="feat-title">Efficiency Frontier</div><div class="feat-desc">Pareto-optimal curve showing max portfolio value at each R&D budget level</div></div>
+      <div class="feature-card"><div class="feat-icon">🤖</div><div class="feat-title">AI Trade-off Analysis</div><div class="feat-desc">Ask the co-pilot to explain what you sacrifice when optimizing for one objective over another</div></div>
+    </div>
+    <div class="use-case-box slide-up delay-2"><div class="use-case-label">Example Use Case</div><div class="use-case-text">"If we need to cut R&D budget by 20%, which programs should we deprioritize? Show me the optimal portfolio under a $4B constraint."</div></div>
+  </div>
+</div>
+
+<!-- Scene 6: AI Analyst -->
+<div class="scene" id="scene-6">
+  <div class="tab-scene" style="width:100%;height:100%;">
+    <div class="tab-header"><div class="tab-icon">✨</div><div><div class="tab-name">Tab 6</div><div class="tab-title">AI Analyst & Co-Pilot</div></div></div>
+    <div class="narration-box slide-up">
+      <div class="narration-text">The AI isn't just a tab — it's <em>woven into every surface</em>. A persistent <em>slide-out co-pilot panel</em> is accessible from any tab via the floating chat button. It knows which view you're on, which program you've selected, and surfaces <em>contextual suggested questions</em>. On metric cards, chart headers, and scorecard rows, small <em>sparkle triggers</em> open the panel with pre-loaded questions. The AI generates <em>interactive charts inline</em> — bar, line, pie, scatter, and tables — right within the conversation. The standalone AI Analyst tab offers a full-page experience for open-ended portfolio exploration.</div>
+    </div>
+    <div class="features-grid slide-up delay-1">
+      <div class="feature-card"><div class="feat-icon">💬</div><div class="feat-title">Context-Aware Panel</div><div class="feat-desc">System prompt dynamically includes current tab, selected program, and active filters</div></div>
+      <div class="feature-card"><div class="feat-icon">📊</div><div class="feat-title">Inline Chart Generation</div><div class="feat-desc">AI produces live Recharts visualizations within the conversation — not just text answers</div></div>
+      <div class="feature-card"><div class="feat-icon">✨</div><div class="feat-title">Sparkle Micro-Triggers</div><div class="feat-desc">Click the sparkle on any KPI, chart, or program row for instant contextual AI analysis</div></div>
+      <div class="feature-card"><div class="feat-icon">🧠</div><div class="feat-title">Strategic Advisor Tone</div><div class="feat-desc">Trained to think like a portfolio strategy consultant — concise, numbers-driven, actionable</div></div>
+    </div>
+    <div class="use-case-box slide-up delay-2"><div class="use-case-label">Example Use Case</div><div class="use-case-text">"What happens to our 10-year revenue if Cerebrix fails Phase 3? Show me the impact as a chart and suggest mitigation strategies."</div></div>
+  </div>
+</div>
+
+<!-- Scene 7: Data & Closing -->
+<div class="scene" id="scene-7">
+  <div class="cta-scene" style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;">
+    <div style="font-size:13px;color:#4A90D9;text-transform:uppercase;letter-spacing:0.15em;font-weight:600;margin-bottom:8px;" class="slide-up">Powered By Your Data</div>
+    <h2 class="slide-up delay-1" style="max-width:600px;line-height:1.3;">Upload an Excel file.<br/>The entire dashboard updates.</h2>
+    <div class="cta-sub slide-up delay-2">PortfolioIQ reads a 4-tab Excel workbook — Revenue Forecast, R&D Spend, PTRS by Phase, and Development Roadmap. Your data stays in your environment. The AI co-pilot dynamically adjusts its context to whatever portfolio is loaded.</div>
+    <div class="cta-pills slide-up delay-3">
+      <div class="cta-pill">📄 Revenue Forecast tab → 10Y projections</div>
+      <div class="cta-pill">💰 R&D Spend tab → Budget analysis</div>
+      <div class="cta-pill">🎯 PTRS tab → Valuations & risk</div>
+      <div class="cta-pill">🗓️ Roadmap tab → Events & timeline</div>
+    </div>
+    <div style="margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:8px;" class="slide-up delay-4">
+      <div class="logo" style="display:flex;align-items:center;gap:6px;font-size:28px;"><span class="blue" style="color:#8BB8E8;font-weight:300;">blue</span><span class="matter" style="color:#fff;font-weight:700;">matter</span></div>
+      <div style="font-size:13px;color:#7A8FA6;">PortfolioIQ — Built for biopharma portfolio decisions</div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div class="progress-bar" id="progress"></div>
+
+<!-- Timer -->
+<div class="timer" id="timer">0:00 / 1:04</div>
+
+<!-- Scene indicators -->
+<div class="indicators" id="indicators"></div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="ctrl-btn" id="btn-prev" title="Previous">◀</button>
+  <button class="ctrl-btn active" id="btn-play" title="Play/Pause">▶</button>
+  <button class="ctrl-btn" id="btn-next" title="Next">▶</button>
+  <button class="ctrl-btn" id="btn-restart" title="Restart">↺</button>
+</div>
+
+<script>
+const SCENES = 8;
+const DURATIONS = [5, 9, 9, 9, 8, 8, 8, 8]; // seconds per scene
+const TOTAL = DURATIONS.reduce((a,b)=>a+b,0);
+
+let current = 0;
+let playing = true;
+let elapsed = 0;
+let sceneElapsed = 0;
+let interval = null;
+
+// Build indicators
+const indContainer = document.getElementById('indicators');
+for(let i=0;i<SCENES;i++){
+  const d = document.createElement('div');
+  d.className = 'indicator' + (i===0?' active':'');
+  d.dataset.idx = i;
+  d.style.cursor = 'pointer';
+  d.onclick = ()=>goToScene(i);
+  indContainer.appendChild(d);
+}
+
+function goToScene(idx) {
+  if(idx<0||idx>=SCENES) return;
+  document.querySelectorAll('.scene').forEach((s,i)=>{
+    s.classList.toggle('active', i===idx);
+  });
+  document.querySelectorAll('.indicator').forEach((d,i)=>{
+    d.classList.toggle('active', i===idx);
+  });
+  // recalc elapsed
+  elapsed = 0;
+  for(let i=0;i<idx;i++) elapsed += DURATIONS[i];
+  sceneElapsed = 0;
+  current = idx;
+  updateProgress();
+  // Re-trigger animations by cloning
+  const scene = document.getElementById('scene-'+idx);
+  scene.querySelectorAll('.slide-up,.delay-1,.delay-2,.delay-3,.delay-4').forEach(el=>{
+    el.style.animation='none';
+    el.offsetHeight; // reflow
+    el.style.animation='';
+  });
+}
+
+function updateProgress(){
+  const pct = (elapsed / TOTAL) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+  const mins = Math.floor(elapsed/60);
+  const secs = Math.floor(elapsed%60);
+  document.getElementById('timer').textContent =
+    `${mins}:${secs.toString().padStart(2,'0')} / ${Math.floor(TOTAL/60)}:${(TOTAL%60).toString().padStart(2,'0')}`;
+}
+
+function tick(){
+  if(!playing) return;
+  elapsed += 0.1;
+  sceneElapsed += 0.1;
+  if(sceneElapsed >= DURATIONS[current]){
+    sceneElapsed = 0;
+    if(current < SCENES-1){
+      goToScene(current+1);
+    } else {
+      playing = false;
+      document.getElementById('btn-play').textContent = '▶';
+      document.getElementById('btn-play').classList.remove('active');
+    }
+  }
+  updateProgress();
+}
+
+interval = setInterval(tick, 100);
+
+document.getElementById('btn-play').onclick = ()=>{
+  playing = !playing;
+  const btn = document.getElementById('btn-play');
+  btn.textContent = playing ? '⏸' : '▶';
+  btn.classList.toggle('active', playing);
+  if(playing && current===SCENES-1 && sceneElapsed>=DURATIONS[current]){
+    goToScene(0); sceneElapsed=0; elapsed=0;
+  }
+};
+document.getElementById('btn-prev').onclick = ()=>goToScene(current-1);
+document.getElementById('btn-next').onclick = ()=>goToScene(current+1);
+document.getElementById('btn-restart').onclick = ()=>{
+  goToScene(0); sceneElapsed=0; elapsed=0; playing=true;
+  document.getElementById('btn-play').textContent='⏸';
+  document.getElementById('btn-play').classList.toggle('active',true);
+};
+
+// Auto-switch play icon
+setTimeout(()=>{document.getElementById('btn-play').textContent='⏸';},100);
+
+// Keyboard controls
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='ArrowRight') goToScene(current+1);
+  if(e.key==='ArrowLeft') goToScene(current-1);
+  if(e.key===' '){ e.preventDefault(); document.getElementById('btn-play').click(); }
+});
+</script>
+</body>
+</html>
